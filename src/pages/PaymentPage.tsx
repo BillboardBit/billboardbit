@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Container } from '@/components/Layout';
+import { getFullUrl } from '@/libs/url';
 import { 
   Zap, 
   Copy, 
@@ -43,7 +44,7 @@ export default function PaymentPage() {
   // Preset amount options
   const PRESET_AMOUNTS = [1000, 2100, 4200, 10000, 21000];
 
-  const boardUrl = boardId ? `${window.location.origin}/board/${boardId}` : '';
+  const boardUrl = boardId ? getFullUrl(`/board/${boardId}`) : '';
 
   // Load board config
   useEffect(() => {

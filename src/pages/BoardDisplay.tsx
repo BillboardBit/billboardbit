@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Zap, Trophy, TrendingUp, AlertCircle, ExternalLink } from 'lucide-react';
 import { fetchBoardConfig, subscribeToZapMessages } from '@/libs/nostr';
+import { getFullUrl } from '@/libs/url';
 import type { BoardConfig, ZapMessage } from '@/types';
 
 export default function BoardDisplay() {
@@ -24,7 +25,7 @@ export default function BoardDisplay() {
   // Use ref to track seen message IDs to prevent duplicates
   const seenMessageIds = useRef<Set<string>>(new Set());
 
-  const paymentUrl = boardId ? `${window.location.origin}/pay/${boardId}` : '';
+  const paymentUrl = boardId ? getFullUrl(`/pay/${boardId}`) : '';
 
   // Load board configuration
   useEffect(() => {

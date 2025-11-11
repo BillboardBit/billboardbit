@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { getFullUrl } from '@/libs/url';
 import { 
   ArrowLeft, 
   Copy, 
@@ -35,7 +36,7 @@ export default function Dashboard() {
   const [copiedItem, setCopiedItem] = useState<string>('');
 
   // URLs for sharing
-  const boardUrl = boardId ? `${window.location.origin}/board/${boardId}` : '';
+  const boardUrl = boardId ? getFullUrl(`/board/${boardId}`) : '';
   const dashboardUrl = window.location.href;
 
   useEffect(() => {
