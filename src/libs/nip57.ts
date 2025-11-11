@@ -5,8 +5,18 @@ import {
 import { generateSecretKey, finalizeEvent } from 'nostr-tools';
 import type { EventTemplate } from 'nostr-tools';
 
-// CORS proxy for GitHub Pages deployment
-const CORS_PROXY = 'https://corsproxy.io/?';
+// Helper to proxy URL for CORS (only in production/GitHub Pages)
+function proxyUrl(url: string): string {
+    // Check if we're on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    
+    if (!isGitHubPages) {
+        return url; // No proxy needed in development
+    }
+    
+    // Use allorigins as it's more reliable than corsproxy.io
+    return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+}
 
 interface GenerateInvoiceParams {
     lightningAddress: string;
@@ -37,9 +47,8 @@ export async function generateInvoice(params: GenerateInvoiceParams): Promise<{
 
         // Fetch LNURL endpoint
         const lnurlUrl = `https://${domain}/.well-known/lnurlp/${username}`;
-        const proxiedLnurlUrl = CORS_PROXY + encodeURIComponent(lnurlUrl);
         
-        const lnurlResponse = await fetch(proxiedLnurlUrl);
+        const lnurlResponse = await fetch(proxyUrl(lnurlUrl));
 
         if (!lnurlResponse.ok) {
             throw new Error('Lightning address not found');
@@ -87,10 +96,8 @@ export async function generateInvoice(params: GenerateInvoiceParams): Promise<{
         callbackUrl.searchParams.set('amount', (amount * 1000).toString());
         callbackUrl.searchParams.set('nostr', JSON.stringify(signedZapRequest));
         // callbackUrl.searchParams.set('comment', message);
-
-        const proxiedUrl = CORS_PROXY + encodeURIComponent(callbackUrl.toString());
         
-        const invoiceResponse = await fetch(proxiedUrl);
+        const invoiceResponse = await fetch(proxyUrl(callbackUrl.toString()));
 
         if (!invoiceResponse.ok) {
             throw new Error('Failed to get invoice');

@@ -1,5 +1,11 @@
-// CORS proxy for GitHub Pages deployment
-const CORS_PROXY = 'https://corsproxy.io/?';
+// Helper to proxy URL for CORS (only in production/GitHub Pages)
+function proxyUrl(url: string): string {
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  if (!isGitHubPages) {
+    return url;
+  }
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+}
 
 /**
  * Validate Lightning address format
@@ -22,9 +28,8 @@ export async function validateLightningAddress(
   try {
     const [username, domain] = address.split('@');
     const url = `https://${domain}/.well-known/lnurlp/${username}`;
-    const proxiedUrl = CORS_PROXY + encodeURIComponent(url);
     
-    const response = await fetch(proxiedUrl);
+    const response = await fetch(proxyUrl(url));
     
     if (!response.ok) {
       return { valid: false, error: 'Address not found' };
