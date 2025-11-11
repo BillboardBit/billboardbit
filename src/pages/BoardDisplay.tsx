@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { QRCodeSVG } from 'qrcode.react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ export default function BoardDisplay() {
   const [messages, setMessages] = useState<ZapMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [newMessageId, setNewMessageId] = useState<string | null>(null);
   
   // Use ref to track seen message IDs to prevent duplicates
   const seenMessageIds = useRef<Set<string>>(new Set());
@@ -72,7 +74,10 @@ export default function BoardDisplay() {
           // Double-check in state as well
           const exists = prev.find((m) => m.id === message.id);
           if (exists) return prev;
-          return [...prev, message];
+          // Add new message at the beginning for instant display at top
+          setNewMessageId(message.id);
+          setTimeout(() => setNewMessageId(null), 3000);
+          return [message, ...prev];
         });
       }
     );
@@ -142,28 +147,47 @@ export default function BoardDisplay() {
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 md:py-6 md:px-8">
           <div className="flex flex-col items-start justify-between gap-3 md:gap-4 md:flex-row md:items-center">
-            <div className="space-y-1">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-1"
+            >
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
                 {boardConfig.displayName}
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground">
                 Send {boardConfig.minZapAmount}+ sats to post a message
               </p>
-            </div>
-            <div className="text-left md:text-right">
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-left md:text-right"
+            >
               <div className="text-xs md:text-sm text-muted-foreground">Total Raised</div>
-              <div className="flex items-center gap-2 text-xl md:text-2xl font-bold">
+              <motion.div 
+                className="flex items-center gap-2 text-xl md:text-2xl font-bold"
+                key={totalSats}
+                initial={{ scale: 1.2 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <Zap className="h-5 w-5 md:h-6 md:w-6 fill-yellow-500 text-yellow-500" />
                 {totalSats.toLocaleString()} sats
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6 md:px-8">
         {/* Mobile CTA Button - Show only on mobile */}
-        <div className="mb-6 lg:hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6 lg:hidden"
+        >
           <Button
             onClick={() => window.open(paymentUrl, '_blank')}
             className="w-full gap-2 h-12 text-base"
@@ -172,11 +196,16 @@ export default function BoardDisplay() {
             <Zap className="h-5 w-5" />
             Send a Message
           </Button>
-        </div>
+        </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content - Messages */}
-          <div className="lg:col-span-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-2"
+          >
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -184,7 +213,14 @@ export default function BoardDisplay() {
                     <TrendingUp className="h-5 w-5" />
                     Live Messages
                   </CardTitle>
-                  <Badge variant="secondary">{messages.length} messages</Badge>
+                  <motion.div
+                    key={messages.length}
+                    initial={{ scale: 1.3 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring" }}
+                  >
+                    <Badge variant="secondary">{messages.length} messages</Badge>
+                  </motion.div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -200,49 +236,84 @@ export default function BoardDisplay() {
                       </div>
                     ) : (
                       <div className="space-y-3 md:space-y-4">
-                        {sortedMessages.map((message, index) => (
-                        <Card
-                          key={message.id}
-                          className="border-2 transition-all"
-                        >
-                          <CardContent className="p-4 md:p-6">
-                            <div className="flex items-start justify-between gap-3 md:gap-4">
-                              <div className="flex-1 space-y-2 md:space-y-3">
-                                <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                                  <Badge variant="outline" className="font-mono text-xs md:text-sm px-2 py-0.5 md:px-3 md:py-1">
-                                    <Zap className="mr-1 h-3 w-3 md:mr-1.5 md:h-4 md:w-4 fill-yellow-500 text-yellow-500" />
-                                    {message.zapAmount.toLocaleString()} sats
-                                  </Badge>
-                                  <span className="text-xs md:text-sm text-muted-foreground">
-                                    {formatTimeAgo(message.timestamp)}
-                                  </span>
-                                </div>
-                                <p className="text-sm md:text-base leading-relaxed font-medium wrap-break-word">
-                                  {message.content}
-                                </p>
-                                {message.displayName && (
-                                  <p className="text-xs md:text-sm text-muted-foreground font-medium">
-                                    — {message.displayName}
-                                  </p>
-                                )}
-                              </div>
-                              {index < 3 && (
-                                <Trophy className="h-5 w-5 md:h-6 md:w-6 shrink-0 text-yellow-500" />
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
+                        <AnimatePresence initial={false}>
+                          {sortedMessages.map((message, index) => (
+                            <motion.div
+                              key={message.id}
+                              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, x: -100 }}
+                              transition={{ 
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30
+                              }}
+                              layout
+                            >
+                              <Card className={`border-2 transition-all hover:border-primary/50 hover:shadow-md ${
+                                message.id === newMessageId ? 'ring-2 ring-primary shadow-lg' : ''
+                              }`}>
+                                <CardContent className="p-4 md:p-6">
+                                  <div className="flex items-start justify-between gap-3 md:gap-4">
+                                    <div className="flex-1 space-y-2 md:space-y-3">
+                                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                                        <Badge variant="outline" className="font-mono text-xs md:text-sm px-2 py-0.5 md:px-3 md:py-1">
+                                          <Zap className="mr-1 h-3 w-3 md:mr-1.5 md:h-4 md:w-4 fill-yellow-500 text-yellow-500" />
+                                          {message.zapAmount.toLocaleString()} sats
+                                        </Badge>
+                                        <span className="text-xs md:text-sm text-muted-foreground">
+                                          {formatTimeAgo(message.timestamp)}
+                                        </span>
+                                      </div>
+                                      <motion.p 
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.1 }}
+                                        className="text-sm md:text-base leading-relaxed font-medium wrap-break-word"
+                                      >
+                                        {message.content}
+                                      </motion.p>
+                                      {message.displayName && (
+                                        <motion.p 
+                                          initial={{ opacity: 0 }}
+                                          animate={{ opacity: 1 }}
+                                          transition={{ delay: 0.15 }}
+                                          className="text-xs md:text-sm text-muted-foreground font-medium"
+                                        >
+                                          — {message.displayName}
+                                        </motion.p>
+                                      )}
+                                    </div>
+                                    {index < 3 && (
+                                      <motion.div
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ type: "spring", delay: 0.2 }}
+                                      >
+                                        <Trophy className="h-5 w-5 md:h-6 md:w-6 shrink-0 text-yellow-500" />
+                                      </motion.div>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
 
           {/* Sidebar - Hidden on mobile */}
-          <div className="hidden space-y-6 lg:block">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="hidden space-y-6 lg:block"
+          >
             {/* QR Code */}
             <Card>
               <CardHeader>
@@ -347,7 +418,7 @@ export default function BoardDisplay() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

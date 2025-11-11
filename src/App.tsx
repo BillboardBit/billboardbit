@@ -11,7 +11,7 @@ import ZapMe from '@/pages/ZapMe';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/billboardbit">
       <div className="flex min-h-screen flex-col pb-20 md:pb-0">
         <Header />
         <MainLayout>
