@@ -14,7 +14,7 @@ export default function Header() {
           className="flex items-center gap-3 cursor-pointer group"
         >
           <img
-            src="/logo.svg"
+            src="/billboardbit/logo.svg"
             alt="BillboardBit logo"
             className="h-8 w-8 object-contain transition-transform duration-200 group-hover:scale-110"
           />
