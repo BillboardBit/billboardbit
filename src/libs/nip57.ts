@@ -5,6 +5,9 @@ import {
 import { generateSecretKey, finalizeEvent } from 'nostr-tools';
 import type { EventTemplate } from 'nostr-tools';
 
+// CORS proxy for GitHub Pages deployment
+const CORS_PROXY = 'https://corsproxy.io/?';
+
 interface GenerateInvoiceParams {
     lightningAddress: string;
     amount: number;
@@ -34,7 +37,9 @@ export async function generateInvoice(params: GenerateInvoiceParams): Promise<{
 
         // Fetch LNURL endpoint
         const lnurlUrl = `https://${domain}/.well-known/lnurlp/${username}`;
-        const lnurlResponse = await fetch(lnurlUrl);
+        const proxiedLnurlUrl = CORS_PROXY + encodeURIComponent(lnurlUrl);
+        
+        const lnurlResponse = await fetch(proxiedLnurlUrl);
 
         if (!lnurlResponse.ok) {
             throw new Error('Lightning address not found');
@@ -83,7 +88,9 @@ export async function generateInvoice(params: GenerateInvoiceParams): Promise<{
         callbackUrl.searchParams.set('nostr', JSON.stringify(signedZapRequest));
         // callbackUrl.searchParams.set('comment', message);
 
-        const invoiceResponse = await fetch(callbackUrl.toString());
+        const proxiedUrl = CORS_PROXY + encodeURIComponent(callbackUrl.toString());
+        
+        const invoiceResponse = await fetch(proxiedUrl);
 
         if (!invoiceResponse.ok) {
             throw new Error('Failed to get invoice');
